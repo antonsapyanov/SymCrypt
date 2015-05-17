@@ -6,8 +6,7 @@ from __future__ import division
 from static import PATH
 from boolfunc import PolynomialOverF2, BoolFunction, timer
 
-import multiprocessing as mp
-
+from multiprocessing  import Process, Manager, Lock
 
 def exception_checker(function):
 
@@ -156,23 +155,40 @@ def analyze_relative_deviation_of_rde(bool_function, rate_distribution_error_mul
 @timer
 def analyze_maximum_differential_probability(bool_function):
 
-	truth_table = bool_function.truth_table
-	n = bool_function.field_extension
-	differential_probability = {}
-	for a in range(1, pow(2, n)):
-		differential_probability[a] = {}
+	manager = Manager()
+	lock = manager.Lock()
 
-	for x in xrange(pow(2, n)):
-		for a in xrange(1, pow(2, n)):
+	truth_table = manager.list(bool_function.truth_table)
+	n = bool_function.field_extension
+	differential_probability = manager.dict()
+	for a in range(1, pow(2, n)):
+		differential_probability[a] = manager.dict()
+	
+	process1 = Process(target=process_analyze_mdp, args=(lock, truth_table, differential_probability, n, 1, pow(2, n - 1)))
+	process2 = Process(target=process_analyze_mdp, args=(lock, truth_table, differential_probability, n, pow(2, n - 1), pow(2, n)))
+	
+	process1.start()
+	process2.start()
+	
+	process1.join()
+	process2.join()
+
+	MDP = pow(2, -n) * max([ max(differential_probability[a].values()) for a in differential_probability ])
+
+	return MDP
+	
+def process_analyze_mdp(lock, truth_table, differential_probability, field_extension, begin, end):
+
+	for x in xrange(pow(2, field_extension)):
+		for a in xrange(begin, end):
 			b = truth_table[x] ^ truth_table[x ^ a]
+
+			lock.acquire()
 			try:
 				differential_probability[a][b] += 1
 			except KeyError:
 				differential_probability[a][b] = 1
-
-	MDP = max([ max(differential_probability[a]) for a in differential_probability ])
-
-	return MDP
+			lock.release()
 
 def analyze_f():
 
@@ -186,6 +202,7 @@ def analyze_f():
 	f.read_walsh_spectrum_table_from(PATH['f(x)']['Walsh spectrum table'])
 
 	print analyze_maximum_differential_probability(f)
+	
 	'''
 	f.create_truth_table()
 	f.create_anf_table()
