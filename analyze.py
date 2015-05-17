@@ -5,8 +5,7 @@ from __future__ import division
 
 from static import PATH
 from boolfunc import PolynomialOverF2, BoolFunction, timer
-
-from multiprocessing  import Process, Manager, Lock
+from multiprocessing  import Process, Manager
 
 def exception_checker(function):
 
@@ -99,6 +98,7 @@ def analyze_k_balance(bool_function):
 				k_balance[f] = k
 			else:
 				break
+
 	return k_balance
 
 @exception_checker
@@ -156,88 +156,120 @@ def analyze_relative_deviation_of_rde(bool_function, rate_distribution_error_mul
 def analyze_maximum_differential_probability(bool_function):
 
 	manager = Manager()
-	lock = manager.Lock()
 
-	truth_table = manager.list(bool_function.truth_table)
 	n = bool_function.field_extension
-	differential_probability = manager.dict()
-	for a in range(1, pow(2, n)):
-		differential_probability[a] = manager.dict()
-	
-	process1 = Process(target=process_analyze_mdp, args=(lock, truth_table, differential_probability, n, 1, pow(2, n - 1)))
-	process2 = Process(target=process_analyze_mdp, args=(lock, truth_table, differential_probability, n, pow(2, n - 1), pow(2, n)))
-	
+
+	mdp1 = manager.Value('d', 0.0)
+	mdp2 = manager.Value('d', 0.0)
+
+	process1 = Process(target=process_analyze_mdp, args=(bool_function.truth_table, n, 1, pow(2, n - 1),  mdp1))
+	process2 = Process(target=process_analyze_mdp, args=(bool_function.truth_table, n, pow(2, n - 1), pow(2, n), mdp2))
+
 	process1.start()
 	process2.start()
 	
 	process1.join()
 	process2.join()
 
-	MDP = pow(2, -n) * max([ max(differential_probability[a].values()) for a in differential_probability ])
+	return max(mdp1.value, mdp2.value)
 
-	return MDP
-	
-def process_analyze_mdp(lock, truth_table, differential_probability, field_extension, begin, end):
+def process_analyze_mdp(truth_table, field_extension, begin, end, mdp):
 
-	for x in xrange(pow(2, field_extension)):
-		for a in xrange(begin, end):
-			b = truth_table[x] ^ truth_table[x ^ a]
+	MDP = 0.0
+	power = pow(2, field_extension)
+	power_array = range(power)
+	a_array = range(begin, end)
 
-			lock.acquire()
-			try:
-				differential_probability[a][b] += 1
-			except KeyError:
-				differential_probability[a][b] = 1
-			lock.release()
+	for a in a_array:
+		b = [ 0 for i in power_array ]
+		
+		for x in power_array:
+			b[truth_table[x] ^ truth_table[x ^ a]] |= 1
+
+		MDP = max(MDP, max(b))
+
+	mdp.value = MDP / power
 
 def analyze_f():
 
 	p = PolynomialOverF2(131081)
-	N = 13
-
+	N = 257
+	
 	f = BoolFunction(N, p)
 
 	f.read_truth_table_from(PATH['f(x)']['Truth table'])
 	f.read_anf_table_from(PATH['f(x)']['ANF table'])
 	f.read_walsh_spectrum_table_from(PATH['f(x)']['Walsh spectrum table'])
 
-	print analyze_maximum_differential_probability(f)
+	print analyze_algebraic_degree(f)
+	print analyze_disbalance(f)
+	print analyze_nonlinearity(f)
+
+	rate_distribution_error = analyze_rate_distribution_error(f)['result']
+	print analyze_relative_deviation_of_rde(
+		f,
+		rate_distribution_error['multi'],
+		rate_distribution_error['uni'])['result']['uni']
+
+	'''
+	mdp =  analyze_maximum_differential_probability(f)
+
+	with codecs.open(PATH['f(x)']['mdp.txt'], 'w', 'utf-8-sig') as file:
+		file.write(str(mdp))
+	'''
 	
-	'''
-	f.create_truth_table()
-	f.create_anf_table()
-	f.create_walsh_spectrum_table()
-
-	f.write_truth_table_to(PATH['f(x)']['Truth table'])
-	f.write_anf_table_to(PATH['f(x)']['ANF table'])
-	f.write_walsh_spectrum_table_to(PATH['f(x)']['Walsh spectrum table'])
-	'''
-
 
 def analyze_g():
-	
-	# p = PolynomialOverF2(69643)
-	p = PolynomialOverF2(32771)
-	M = 5
+
+	p = PolynomialOverF2(131081)
+	M = 258
 
 	g = BoolFunction(M, p)
 
-	# g.read_truth_table_from('M14/truth_table.txt')
-	# g.read_anf_table_from('M14/anf_table.txt')
-	# g.read_walsh_spectrum_table_from('M14/walsh_spectrum_table.txt')
-
 	g.create_truth_table()
+	g.write_truth_table_to(PATH['g(x)']['Truth table'])
+
 	g.create_anf_table()
+	g.write_anf_table_to(PATH['g(x)']['ANF table'])
+
 	g.create_walsh_spectrum_table()
+	g.write_walsh_spectrum_table_to(PATH['g(x)']['Walsh spectrum table'])
 
 	print analyze_algebraic_degree(g)
 	print analyze_disbalance(g)
 	print analyze_nonlinearity(g)
-	print analyze_k_balance(g)
+
+	rate_distribution_error = analyze_rate_distribution_error(g)['result']
+	print analyze_relative_deviation_of_rde(
+		g,
+		rate_distribution_error['multi'],
+		rate_distribution_error['uni'])['result']['uni']
+
+def analyze_prev_f():
+
+	p = PolynomialOverF2(131081)
+	N = 13
+	
+	f = BoolFunction(N, p)
+
+	f.create_truth_table()
+	f.create_anf_table()
+	f.create_walsh_spectrum_table()
+
+	# print analyze_algebraic_degree(f)
+	# print analyze_disbalance(f)
+	# print analyze_nonlinearity(f)
+
+	rate_distribution_error = analyze_rate_distribution_error(f)['result']
+	print analyze_relative_deviation_of_rde(
+		f,
+		rate_distribution_error['multi'],
+		rate_distribution_error['uni'])['result']['uni']
 
 def main():
 
-	analyze_f()
+	analyze_prev_f()
+	# analyze_g()
 
 if __name__ == '__main__':
 	main()

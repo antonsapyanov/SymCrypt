@@ -30,14 +30,14 @@ class PolynomialOverF2(object):
 
 	def __str__(self):
 		
-		return '< ' + ', '.join([ str(coef) for coef in self.repr() ]) + ' >'
+		return '< ' + ', '.join([ str(int(bool(self._number & (1 << i)))) for i in range(self._deg + 1) ]) + ' >'
 
 	def repr(self, n=0):
 		
 		string_coef_array = bin(self._number)[2:]
 		k = n - len(string_coef_array)
 
-		return tuple([ int(coef) for coef in reversed(string_coef_array) ] + [ 0 for i in range(k)])
+		return tuple([ int(bool(self._number & (1 << i))) for i in range(self._deg + 1) ] + [ 0 for i in range(k)])
 
 	'''to deal with as a number'''
 	def __lshift__(self, value):
