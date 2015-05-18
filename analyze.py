@@ -214,20 +214,51 @@ def analyze_maximum_differential_probability(bool_function):
 def process_analyze_mdp(truth_table, field_extension, begin, end, mdp):
 
 	MDP = 0.0
-	power = pow(2, field_extension)
-	power_array = range(power)
+	field_power = pow(2, field_extension)
+	field_elements = range(field_power)
 	a_array = range(begin, end)
 
 	for a in a_array:
-		b = [ 0 for i in power_array ]
+		b = [ 0 for i in field_elements ]
 		
-		for x in power_array:
+		for x in field_elements:
 			b[truth_table[x] ^ truth_table[x ^ a]] |= 1
 
 		MDP = max(MDP, max(b))
 
-	mdp.value = MDP / powe
+	mdp.value = MDP / power
 
 '''WRITE ANALYZE INFO INTO FILE'''
-def write_algebraic_degree_analyze_to(filename):
-	
+def write_algebraic_degree_analyze_to(filename, algebraic_degree_list, time):
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(algebraic_degree_list)):
+			file.write("f%d" % (f + 1) + '\t' + str(algebraic_degree_list[f]) + '\n')
+		
+		file.write("\nF" + '\t' + str(min(algebraic_degree_list)) + '\n')
+		file.write('time: %f' % time)
+
+def write_disbalance_analyze_to(filename, disbalance_list, time):
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(disbalance_list)):
+			file.write("f%d" % (f + 1) + '\t' + str(disbalance_list[f]) + '\n')
+
+		file.write('time: %f' % time)
+
+def write_nonlinearity_analyze_to(filename, nonlinearity_list, time):
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(nonlinearity_list)):
+			file.write("f%d" % (f + 1) + '\t' + str(nonlinearity_list[f]) + '\n')
+
+		file.write('time: %f' % time)
+
+def write_k_balance_analyze_to(filename, k_balance_list, time):
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(k_balance_list)):
+			file.write("f%d" % (f + 1) + '\t' + str(k_balance_list[f]) + '\n')
+
+		file.write('time: %f' % time)
+
