@@ -18,7 +18,7 @@ PATH = {
 		"MDP": "f(x)/mdp.txt",
 		"Algebraic degree": "f(x)/algebraic_degree.txt",
 		"Disbalance": "f(x)/disbalance.txt",
-		"RDE": "g(x)/rde.txt",
+		"RDE": "f(x)/rde.txt",
 		"Nonlinearity": "f(x)/nonlinearity.txt",
 		"k-balance": "f(x)/k_balance.txt",
 		"Relative deviation of RDE": "f(x)/relative_deviation_rde.txt",

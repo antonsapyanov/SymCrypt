@@ -226,7 +226,7 @@ def process_analyze_mdp(truth_table, field_extension, begin, end, mdp):
 
 		MDP = max(MDP, max(b))
 
-	mdp.value = MDP / power
+	mdp.value = MDP / field_power
 
 '''WRITE ANALYZE INFO INTO FILE'''
 def write_algebraic_degree_analyze_to(filename, algebraic_degree_list, time):
@@ -262,3 +262,50 @@ def write_k_balance_analyze_to(filename, k_balance_list, time):
 
 		file.write('time: %f' % time)
 
+def write_mdp_analyze_to(filename, mdp, time):
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		file.write(str(mdp) + '\n')
+		file.write('time: %f' % time)
+
+def write_rde_analyze_to(filename, rde, time):
+
+	rde_uni = rde['uni']
+	rde_multi = rde['multi']
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(rde_uni)):
+			string_to_write = ''
+
+			for i in range(len(rde_uni)):
+				string_to_write += '\t' + str(rde_uni[f][i])
+
+			file.write("f%d" % (f + 1) + string_to_write + '\n')
+
+		string_to_write = ''
+		for i in range(len(rde_multi)):
+			string_to_write += '\t' + str(rde_multi[i]) 
+
+		file.write('\nF' + string_to_write + '\n')
+		file.write('time: %f' % time)
+
+def write_relative_deviation_analyze_to(filename, relative_deviation, time):
+
+	relative_deviation_uni = relative_deviation['uni']
+	relative_deviation_multi = relative_deviation['multi']
+
+	with codecs.open(filename, 'w', 'utf-8-sig') as file:
+		for f in range(len(relative_deviation_uni)):
+			string_to_write = ''
+
+			for i in range(len(relative_deviation_uni)):
+				string_to_write += '\t' + str(relative_deviation_uni[f][i])
+
+			file.write("f%d" % (f + 1) + string_to_write + '\n')
+
+		string_to_write = ''
+		for i in range(len(relative_deviation_multi)):
+			string_to_write += '\t' + str(relative_deviation_multi[i]) 
+
+		file.write('\nF' + string_to_write + '\n')
+		file.write('time: %f' % time)
