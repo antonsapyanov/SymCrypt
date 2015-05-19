@@ -80,7 +80,7 @@ def analyze_nonlinearity(bool_function):
 
 @exception_checker
 @timer
-def analyze_k_balance(bool_function):
+def analyze_correlation_immunity(bool_function):
 
 	walsh_spectrum_table = bool_function.walsh_spectrum_table
 	n = bool_function.field_extension
@@ -103,33 +103,6 @@ def analyze_k_balance(bool_function):
 				break
 
 	return k_balance
-
-'''
-@exception_checker
-@timer
-def analyze_correlation_immunity(bool_function):
-
-	truth_table = bool_function.truth_table
-	n = bool_function.field_extension
-	correlation_immunity = [ 0 for f in range(n) ]
-	weight_table = {}
-	field_power = pow(2, n)
-
-	for k in range(1, n + 1):
-		weight_table[k] = []
-
-	for e in xrange(1, field_power):
-		k = sum([ bool(e & (1 << i)) for i in range(n) ])
-		weight_table[k].append(e)
-
-	
-	already_checked_functions = []
-
-	for k, array in weight_table:
-			for e in array:
-
-				res = truth_table[e ^ ()]
-'''	
 
 @exception_checker
 @timer
@@ -222,7 +195,7 @@ def process_analyze_mdp(truth_table, field_extension, begin, end, mdp):
 		b = [ 0 for i in field_elements ]
 		
 		for x in field_elements:
-			b[truth_table[x] ^ truth_table[x ^ a]] |= 1
+			b[truth_table[x] ^ truth_table[x ^ a]] += 1
 
 		MDP = max(MDP, max(b))
 
@@ -254,7 +227,7 @@ def write_nonlinearity_analyze_to(filename, nonlinearity_list, time):
 
 		file.write('time: %f' % time)
 
-def write_k_balance_analyze_to(filename, k_balance_list, time):
+def write_correlation_immunity_analyze_to(filename, k_balance_list, time):
 
 	with codecs.open(filename, 'w', 'utf-8-sig') as file:
 		for f in range(len(k_balance_list)):
